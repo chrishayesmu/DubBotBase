@@ -1,0 +1,16 @@
+{
+  "name": "dubbotbase",
+  "description": "",
+  "version": "0.0.1",
+  "bugs": "https://github.com/chrishayesmu/DubBotBase/issues",
+  "license": "AML",
+  "author": "Chris Hayes",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/chrishayesmu/DubBotBase"
+  },
+  "dependencies": {
+    "dubapi": "1.6.0"
+  }
+}
