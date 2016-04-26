@@ -23,6 +23,19 @@ var ChatType = {
 };
 
 var Event = {
+    // New dub events
+    CHAT_SKIP: 'chat-skip', // TODO
+    ROOM_PLAYLIST_DUB: 'room_playlist-dub',
+    ROOM_PLAYLIST_GRAB: 'room_playlist-queue-update-grabs',
+    ROOM_PLAYLIST_QUEUE_UPDATE: 'room_playlist-queue-update-dub',
+    ROOM_PLAYLIST_UPDATE: 'room_playlist-update',
+    ROOM_UPDATE: 'room-update',
+    USER_IMAGE_UPDATE: 'user-update',
+    USER_SET_ROLE: 'user-setrole',
+    USER_UNBAN: 'user-unban',
+    USER_UNMUTE: 'user-unmute',
+    USER_UNSET_ROLE: 'user-unsetrole',
+
     ADVANCE: 'advance', // when the next song is up for play
     CHAT: 'chat-message', // someone sends a chat message
     CHAT_DELETE: 'delete-chat-message', // a mod deletes a chat message
@@ -34,7 +47,7 @@ var Event = {
     MODERATE_ADD_DJ: 'modAddDJ', // a mod adds a DJ to the wait list
     MODERATE_BAN: 'user-ban', // a mod bans a user from the room
     MODERATE_MOVE_DJ: 'modMoveDJ', // a mod reorders a DJ in the wait list
-    MODERATE_MUTE: 'userMute', // a mod mutes a user temporarily
+    MODERATE_MUTE: 'user-mute', // a mod mutes a user temporarily
     MODERATE_REMOVE_DJ: 'modRemoveDJ', // a mod removes a DJ from the wait list
     MODERATE_SKIP: 'modSkip', // a mod skips the current DJ
     MODERATE_STAFF: 'modStaff', // a mod changes somebody's staff level
@@ -45,7 +58,7 @@ var Event = {
     ROOM_WELCOME_UPDATE: 'roomWelcomeUpdate', // a mod changes the room's welcome message
     SKIP: 'skip', // the current DJ chooses to skip
     USER_JOIN: 'user-join', // a user joins the room
-    USER_LEAVE: 'userLeave', // a user leaves the room
+    USER_LEAVE: 'user-leave', // a user leaves the room
     USER_UPDATE: 'user_update', // something changes about a user (e.g. name, avatar, level, etc)
     VOTE: 'vote' // a user woots or mehs
 };

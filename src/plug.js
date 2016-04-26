@@ -40,7 +40,7 @@ var _eventTranslatorMap = {
     'roomWelcomeUpdate': Translator.translateRoomWelcomeUpdateEvent,
     'skip': Translator.translateSkipEvent,
     'user-ban': Translator.translateModBanEvent,
-    'userJoin': Translator.translateUserJoinEvent,
+    'user-join': Translator.translateUserJoinEvent,
     'userLeave': Translator.translateUserLeaveEvent,
     'user_update': Translator.translateUserUpdateEvent,
     'vote': Translator.translateVoteEvent
@@ -377,6 +377,12 @@ Bot.prototype.on = function(eventName, callback, /* optional */ context) {
 function _createEventDispatcher(internalEventName, translator, globalObject) {
     return function(event) {
         var handlers = this.eventHandlers[internalEventName];
+
+        if (!translator) {
+            LOG.error("Could not find a translator for internalEventName {}", internalEventName);
+            return;
+        }
+
         var internalObject = translator(event);
 
         if (!internalObject) {
