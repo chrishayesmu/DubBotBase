@@ -19,31 +19,20 @@ var Utils = require("./utils");
 var LOG = new Log("PlugBotBase-Bot");
 
 var _eventTranslatorMap = {
-    'advance': Translator.translateAdvanceEvent,
+    'chat-skip': Translator.translateSkipEvent,
     'chat-message': Translator.translateChatEvent,
-    'chatDelete': Translator.translateChatDeleteEvent,
-    'djListCycle': Translator.translateDjListCycleEvent,
-    'djListUpdate': Translator.translateDjListUpdateEvent,
-    'djListLocked': Translator.translateDjListLockedEvent,
-    'earn': Translator.translateEarnEvent,
+    'delete-chat-message': Translator.translateChatDeleteEvent,
     'grab': Translator.translateGrabEvent,
-    'modAddDJ': Translator.translateModAddDjEvent,
-    'modMoveDJ': Translator.translateModMoveDjEvent,
-    'modMute': Translator.translateModMuteEvent,
-    'modRemoveDJ': Translator.translateModRemoveDjEvent,
     'modSkip': Translator.translateModSkipEvent,
-    'modStaff': Translator.translateModStaffEvent,
-    'roomDescriptionUpdate': Translator.translateRoomDescriptionUpdateEvent,
-    'roomJoin': Translator.translateRoomJoinEvent,
-    'roomMinChatLevelUpdate': Translator.translateRoomMinChatLevelUpdateEvent,
-    'roomNameUpdate': Translator.translateRoomNameUpdateEvent,
-    'roomWelcomeUpdate': Translator.translateRoomWelcomeUpdateEvent,
-    'skip': Translator.translateSkipEvent,
+    'room_playlist-update': Translator.translateAdvanceEvent,
+    'room_playlist-queue-update-dub': Translator.translateRoomPlaylistQueueUpdateEvent,
     'user-ban': Translator.translateModBanEvent,
     'user-join': Translator.translateUserJoinEvent,
-    'userLeave': Translator.translateUserLeaveEvent,
+    'user-leave': Translator.translateUserLeaveEvent,
+    'user-mute': Translator.translateModMuteEvent,
+    'user-unmute': Translator.translateModMuteEvent,
     'user_update': Translator.translateUserUpdateEvent,
-    'vote': Translator.translateVoteEvent
+    'room_playlist-dub': Translator.translateVoteEvent
 };
 
 /**
@@ -93,74 +82,6 @@ function Bot(credentials, globalObject, initializationCompleteCallback) {
             initializationCompleteCallback(this);
         }
     }).bind(this));
-}
-
-/**
- * Attempts to ban a user from the room. If the bot doesn't have sufficient permissions
- * (that is, it's not at least a bouncer, and a higher role than the target user) then
- * TODO what? return value?
- *
- * @param {mixed} userID - String or number representing the userID of the user to be banned
- * @param {String} banDuration - How long the ban should last, from the BanDuration enum
- * @param {String} banReason - The reason the user is being banned, from the BanReason enum
- * @param {function} callback - Optional; a function to be called once the ban is done (whether succeeded or failed)
- */
-Bot.prototype.banUser = function(userID, banDuration, banReason, callback) {
-    Utils.checkHasValue(userID, "PlugBotBase.banUser called without a userID");
-    Utils.checkValueIsInObject(banDuration, Types.BanDuration, "PlugBotBase.banUser called with an invalid BanDuration: " + banDuration);
-    Utils.checkValueIsInObject(banReason, Types.BanReason, "PlugBotBase.banUser called with an invalid BanReason: " + banReason);
-
-    if (callback) {
-        Utils.checkHasType(callback, "function", "PlugBotBase.banUser called with a non-function value for 'callback' argument");
-    }
-
-    // Translate from our model to PlugAPI
-    var translatedBanDuration, translatedBanReason;
-
-    switch (banDuration) {
-        case Types.BanDuration.HOUR:
-            translatedBanDuration = PlugAPI.BAN.HOUR;
-            break;
-        case Types.BanDuration.DAY:
-            translatedBanDuration = PlugAPI.BAN.DAY;
-            break;
-        case Types.BanDuration.FOREVER:
-            translatedBanDuration = PlugAPI.BAN.PERMA;
-            break;
-    }
-
-    switch (banReason) {
-        case Types.BanReason.SPAMMING_OR_TROLLING:
-            translatedBanReason = PlugAPI.BAN_REASON.SPAMMING_TROLLING;
-            break;
-        case Types.BanReason.VERBAL_ABUSE_OR_OFFENSIVE_LANGUAGE:
-            translatedBanReason = PlugAPI.BAN_REASON.VERBAL_ABUSE;
-            break;
-        case Types.BanReason.PLAYING_OFFENSIVE_MEDIA:
-            translatedBanReason = PlugAPI.BAN_REASON.OFFENSIVE_MEDIA;
-            break;
-        case Types.BanReason.REPEATEDLY_PLAYING_INAPPROPRIATE_GENRES:
-            translatedBanReason = PlugAPI.BAN_REASON.INAPPROPRIATE_GENRE;
-            break;
-        case Types.BanReason.NEGATIVE_ATTITUDE:
-            translatedBanReason = PlugAPI.BAN_REASON.NEGATIVE_ATTITUDE;
-            break;
-    }
-
-    // Actually send the request
-    var wasRequestSent = this.bot.moderateBanUser(userID, translatedBanReason, translatedBanDuration, function() {
-        // TODO: this callback wasn't ever called in testing.
-        // TODO: check the user's permissions relative to the target and the room.
-        LOG.info("ban callback: {}", arguments);
-        if (callback) {
-            var args = [].slice.call(arguments);
-            callback.apply(null, args);
-        }
-    });
-
-    if (!wasRequestSent) {
-        // TODO call callback
-    }
 }
 
 /**
@@ -384,6 +305,8 @@ function _createEventDispatcher(internalEventName, translator, globalObject) {
         }
 
         var internalObject = translator(event);
+
+        LOG.info("Output from translator for internalEventName {}: {}", internalEventName, internalObject);
 
         if (!internalObject) {
             return;

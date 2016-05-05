@@ -2,7 +2,7 @@
 
 /**
  * Contains a whole bunch of functions for translating from
- * PlugAPI to PlugBotBase, and a few functions for going the
+ * DubAPI to DubBotBase, and a few functions for going the
  * other way.
  */
 
@@ -16,29 +16,19 @@ function _repairTitle(author, title) {
 }
 
 /**
- * Translates a date string from PlugAPI into a UNIX timestamp.
+ * Translates a date string from Dubtrack into a Javascript date.
  *
- * @param {string} string - The date string to parse
+ * @param {integer} timestamp - A timestamp from DubAPI
  * @returns {integer} The UNIX timestamp represented by the string,
  *                    or the current time if string is null/empty
  */
-function translateDateString(string) {
-    if (!string) {
-        LOG.warn("Received an empty date string");
+function translateDateTimestamp(timestamp) {
+    if (!timestamp) {
+        LOG.warn("Received an invalid timestamp: {}", timestamp);
         return Date.now();
     }
 
-    // Date strings from plug.dj are in a very specific format:
-    // yyyy-mm-dd HH:MM:SS.SSSSSS
-    if (string.length != 26) {
-        LOG.error("Received an invalid date string to translate: {}", string);
-        return;
-    }
-
-    // Add the time zone; plug appears to use UTC (though it could be GMT)
-    string = string + " UTC";
-
-    return Date.parse(string);
+    return new Date(timestamp);
 }
 
 function translateMediaObject(media) {
@@ -47,11 +37,9 @@ function translateMediaObject(media) {
     }
 
     return {
-        author: media.author, // plug.dj's guess of who the author is
-        contentID: media.cid, // the Youtube or Soundcloud ID
-        durationInSeconds: media.duration, // how long the media is, in seconds
-        fullTitle: _repairTitle(media.author, media.title), // our guess of what the song's original title was
-        title: media.title // plug.dj's guess of what the title is
+        contentID: media.fkid, // the Youtube or Soundcloud ID
+        durationInSeconds: media.songLength / 1000, // how long the media is, in seconds
+        fullTitle: media.name // our guess of what the song's original title was
     };
 }
 
@@ -62,50 +50,42 @@ function translateScoreObject(score) {
 
     return {
         grabs: score.grabs,
-        listeners: score.listeners,
-        mehs: score.negative,
-        woots: score.positive,
-        wasSkipped: score.skipped > 0
+        mehs: score.downdubs,
+        woots: score.updubs
     };
 }
 
-function translateUserObject(plugapiDj) {
-    if (!plugapiDj) {
+function translateUserObject(dubapiDj) {
+    if (!dubapiDj) {
         return null;
     }
 
     return {
-        avatarID: plugapiDj.avatarID,
-        joinDate: translateDateString(plugapiDj.joined),
-        level: plugapiDj.level,
-        role: translateRole(plugapiDj.role),
-        userID: plugapiDj.id,
-        username: plugapiDj.username
+        dubs: dubapiDj.dubs,
+        joinDate: translateDateTimestamp(dubapiDj.created),
+        numberOfSongsPlayed: dubapiDj.playedCount,
+        role: translateRole(dubapiDj.role),
+        userID: dubapiDj.id,
+        username: dubapiDj.username
     };
 }
 
 function translateAdvanceEvent(event) {
-    if (!event.currentDJ || !event.media) {
+    if (!event.user || !event.media) {
+        LOG.warn("advance event is missing required fields; returning null");
         return null;
     }
 
     var obj = {
-        incomingDJ: translateUserObject(event.currentDJ), // the user who is DJing following this event
-        localStartDate: Date.now(), // when the media began playing according to this machine
+        incomingDJ: translateUserObject(event.user), // the user who is DJing following this event
+        localStartDate: new Date(), // when the media began playing according to this machine
         media: translateMediaObject(event.media),
-        startDate: translateDateString(event.startTime) // when the media began playing according to plug.dj
+        startDate: event.startTime && event.startTime > 0 ? translateDateTimestamp(event.startTime) : new Date() // when the media began playing according to dubtrack
     };
 
-    var waitlist = [];
-    for (var i = 0; i < event.djs.length; i++) {
-        waitlist.push(translateUserObject(event.djs[i]));
-    }
-
-    obj.waitlistedDJs = waitlist; // the current state of the waitlist
-
-    if (event.lastPlay && event.lastPlay.dj && event.lastPlay.media && event.lastPlay.score) {
+    if (event.lastPlay && event.lastPlay.user && event.lastPlay.media && event.lastPlay.score) {
         obj.previousPlay = { // the media which played before this one
-            dj: translateUserObject(event.lastPlay.dj),
+            dj: translateUserObject(event.lastPlay.user),
             media: translateMediaObject(event.lastPlay.media),
             score: translateScoreObject(event.lastPlay.score)
         };
@@ -137,8 +117,9 @@ function translateChatEvent(event) {
 
 function translateChatDeleteEvent(event) {
     return {
-        chatID: event.c, // the ID of the chat message which was deleted
-        modUserID: event.mi // the ID of the mod who deleted the message
+        chatID: event.id, // the ID of the chat message which was deleted
+        deleterID: event.user.id, // the ID of the mod who deleted the message
+        deleterUsername: event.user.username
     };
 }
 
@@ -165,125 +146,26 @@ function translateChatType(event) {
     return Types.ChatType.MESSAGE;
 }
 
-function translateDjListCycleEvent(event) {
-    return {
-        isDjCycleOn: event.f, // whether DJ cycle is on following this event
-        modUsername: event.m, // the username of the mod who flipped DJ cycle
-        modUserID: event.mi // the ID of the mod who flipped DJ cycle
-    };
-}
-
-function translateDjListUpdateEvent(event) {
-    return {
-        userIDs: event // IDs of the users who are in the waitlist
-    };
-}
-
-function translateDjListLockedEvent(event) {
-    return {
-        isWaitListOpen: !event.f, // whether the wait list is open following this event
-        wasWaitListCleared: event.c, // whether the wait list was cleared by this event
-        modUsername: event.m, // the username of the mod who changed the wait list
-        modUserID: event.mi // the ID of the mod who changed the wait list
-    };
-}
-
-function translateEarnEvent(event) {
-    return {
-        level: event.level, // current level of the bot
-        totalExp: event.exp // bot's total experience
-    };
-}
-
 function translateGrabEvent(event) {
     return {
         userID: event // ID of the user who grabbed the song
     };
 }
 
-function translateModAddDjEvent(event) {
-    return {
-        modUsername: event.m, // username of the mod who added the DJ
-        modUserID: event.mi, // ID of the mod who added the DJ
-        username: event.t // username of the DJ added to the wait list
-    };
-}
-
 function translateModBanEvent(event) {
-    var duration = event.d === "h" ? Types.BanDuration.HOUR : (event.d === "d" ? Types.BanDuration.DAY : Types.BanDuration.FOREVER);
-    return {
-        duration: duration, // how long the user is banned for
-        modUsername: event.m, // username of the mod who banned the user
-        modUserID: event.mi, // ID of the mod who banned the user
-        username: event.t // username of the banned user
-    };
-}
+    var duration = Number(event.time);
 
-function translateModMoveDjEvent(event) {
     return {
-        modUsername: event.m, // username of the mod who moved the DJ
-        modUserID: event.mi, // ID of the mod who moved the DJ
-        movedUsername: event.u, // username of the DJ who got moved
-        newPosition: event.n, // new position in the wait list of the DJ
-        oldPosition: event.o // old position in the wait list of the DJ
+        bannedUser: translateUserObject(event.user),
+        durationInMinutes: duration, // how long the user is banned for
+        mod: translateUserObject(event.mod) // username of the mod who banned the user
     };
 }
 
 function translateModMuteEvent(event) {
-    var muteReason;
-    switch (event.r) {
-        case 1:
-            muteReason = Types.MuteReason.VIOLATING_COMMUNITY_RULES;
-            break;
-        case 2:
-            muteReason = Types.MuteReason.VERBAL_ABUSE_OR_HARASSMENT;
-            break;
-        case 3:
-            muteReason = Types.MuteReason.SPAMMING_OR_TROLLING;
-            break;
-        case 4:
-            muteReason = Types.MuteReason.OFFENSIVE_LANGUAGE;
-            break;
-        case 5:
-            muteReason = Types.MuteReason.NEGATIVE_ATTITUDE;
-            break;
-        default:
-            muteReason = Types.MuteReason.VIOLATING_COMMUNITY_RULES;
-            LOG.error("Unable to translate mute reason {}. Defaulting to {}.", event.r, muteReason);
-            break;
-    }
-
-    var muteDurationInSeconds;
-    switch (event.d) {
-        case "s":
-            muteDurationInSeconds = 15 * 60;
-            break;
-        case "d":
-            muteDurationInSeconds = 30 * 60;
-            break;
-        case "l":
-            muteDurationInSeconds = 45 * 60;
-            break;
-        default:
-            muteDurationInSeconds = 30 * 60;
-            LOG.error("Unable to translate mute duration '{}'. Defaulting to {} seconds.", event.d, muteDurationInSeconds);
-            break;
-    }
-
     return {
-        muteDurationInSeconds: muteDurationInSeconds, // how long the user is muted for
-        mutedUserID: event.i, // the ID of the user who's been muted
-        mutedUsername: event.t, // the username of the user who's been muted
-        modUsername: event.m, // the username of the mod who muted the user
-        reason: muteReason // the reason the mod selected for muting the user
-    };
-}
-
-function translateModRemoveDjEvent(event) {
-    return {
-        modUsername: event.m, // username of mod who removed the DJ
-        modUserID: event.mi, // ID of the mod who removed the DJ
-        removedUsername: event.t // username of the DJ who was removed
+        mutedUser: translateUserObject(event.user), // the user who's been muted
+        mod: translateUserObject(event.mod)
     };
 }
 
@@ -294,81 +176,34 @@ function translateModSkipEvent(event) {
     };
 }
 
-function translateModStaffEvent(event) {
-    var changedUsers = [];
-    for (var i = 0; i < event.u.length; i++) {
-        var user = event.u[i];
-        var userObj = {
-            userID: user.i, // ID of the user being updated
-            username: user.n, // username of the user being updated
-            role: translateRole(user.p) // newly assigned role of the user
-        };
-        changedUsers.push(userObj);
-    }
-
-    return {
-        modUsername: event.m, // username of the mod who changed staff permissions
-        modUserID: event.mi, // ID of the mod who changed staff permissions
-        users: changedUsers // list of the users who have been updated
-    };
-}
-
-function translateRoomDescriptionUpdateEvent(event) {
-    return {
-        newDescription: event.d, // new description of the room
-        userID: event.u // ID of the mod who changed the description
-    };
-}
-
-function translateRoomJoinEvent(event) {
-    return {
-        roomName: event // name of the room which was joined
-    };
-}
-
-function translateRoomMinChatLevelUpdateEvent(event) {
-    return {
-        minLevel: event.m, // the level that users must be at to chat following this event
-        userID: event.u // ID of the mod who changed the chat level
-    };
-}
-
-function translateRoomNameUpdateEvent(event) {
-    return {
-        newName: event.n, // new name of the room
-        userID: event.u // ID of the mod who changed the name
-    };
-}
-
-function translateRoomWelcomeUpdateEvent(event) {
-    return {
-        newWelcomeMessage: event.w, // new welcome message of the room
-        userID: event.u // ID of the mod who changed the name
-    };
-}
-
 function translateSkipEvent(event) {
     return {
-        userID: event // ID of the user who chose to skip their own song
+        userID: event.user.id, // ID of the user who chose to skip their own song
+        username: event.user.username
     };
 }
 
 function translateUserJoinEvent(event) {
-    return translateUserObject(event);
+    return translateUserObject(event.user);
 }
 
 function translateUserLeaveEvent(event) {
-    return translateUserObject(event);
+    return translateUserObject(event.user);
 }
 
 function translateUserUpdateEvent(event) {
-    return translateUserObject(event);
+    return translateUserObject(event.user);
 }
 
 function translateVoteEvent(event) {
+    if (event.dubtype !== "updub" && event.dubtype !== "downdub") {
+        LOG.warn("Received unknown dubtype {}", event.dubtype);
+        return;
+    }
+
     return {
-        userID: event.i, // ID of the user voting
-        vote: event.v // 1 for a woot, -1 for a meh
+        user: translateUserObject(event.user), // the user voting
+        vote: event.dubtype === "updub" ? 1 : -1
     };
 }
 
@@ -378,50 +213,57 @@ function translateVoteEvent(event) {
  * @param {integer} roleAsInt - The plug.dj API role
  * @returns {object} A corresponding object from the UserRole enum
  */
-function translateRole(roleAsInt) {
-    switch (roleAsInt) {
-        case 0:
-            return Types.UserRole.NONE;
-        case 1:
-            return Types.UserRole.RESIDENT_DJ;
-        case 2:
-            return Types.UserRole.BOUNCER;
-        case 3:
+function translateRole(role) {
+    switch (role) {
+        case "5615fa9ae596154a5c000000":
+            return Types.UserRole.COOWNER;
+        case "5615fd84e596150061000003":
             return Types.UserRole.MANAGER;
-        case 4:
-            return Types.UserRole.COHOST;
-        case 5:
-            return Types.UserRole.HOST;
+        case "52d1ce33c38a06510c000001":
+            return Types.UserRole.MOD;
+        case "5615fe1ee596154fc2000001":
+            return Types.UserRole.VIP;
+        case "5615feb8e596154fc2000002":
+            return Types.UserRole.RESIDENT_DJ;
+        case "564435423f6ba174d2000001":
+            return Types.UserRole.DJ;
         default:
-            LOG.error("Failed to translate role '{}' into UserRole enum. Defaulting to NONE.", roleAsInt);
             return Types.UserRole.NONE;
     }
+}
+
+/**
+ * TODO
+ */
+function translateRoomPlaylistQueueUpdateEvent(event) {
+    if (!event.queue) {
+        return;
+    }
+
+    var queue = [];
+
+    for (var i = 0; i < event.queue.length; i++) {
+        queue.push({
+            media: translateMediaObject(event.queue[i].media),
+            user: translateUserObject(event.queue[i].user)
+        });
+    }
+
+    return { queue: queue };
 }
 
 module.exports = {
     translateAdvanceEvent: translateAdvanceEvent,
     translateChatEvent: translateChatEvent,
     translateChatDeleteEvent: translateChatDeleteEvent,
-    translateDateString: translateDateString,
-    translateDjListCycleEvent: translateDjListCycleEvent,
-    translateDjListUpdateEvent: translateDjListUpdateEvent,
-    translateDjListLockedEvent: translateDjListLockedEvent,
-    translateEarnEvent: translateEarnEvent,
+    translateDateTimestamp: translateDateTimestamp,
     translateGrabEvent: translateGrabEvent,
     translateMediaObject: translateMediaObject,
-    translateModAddDjEvent: translateModAddDjEvent,
     translateModBanEvent: translateModBanEvent,
-    translateModMoveDjEvent: translateModMoveDjEvent,
     translateModMuteEvent: translateModMuteEvent,
-    translateModRemoveDjEvent: translateModRemoveDjEvent,
     translateModSkipEvent: translateModSkipEvent,
-    translateModStaffEvent: translateModStaffEvent,
     translateRole: translateRole,
-    translateRoomDescriptionUpdateEvent: translateRoomDescriptionUpdateEvent,
-    translateRoomJoinEvent: translateRoomJoinEvent,
-    translateRoomMinChatLevelUpdateEvent: translateRoomMinChatLevelUpdateEvent,
-    translateRoomNameUpdateEvent: translateRoomNameUpdateEvent,
-    translateRoomWelcomeUpdateEvent: translateRoomWelcomeUpdateEvent,
+    translateRoomPlaylistQueueUpdateEvent: translateRoomPlaylistQueueUpdateEvent,
     translateScoreObject: translateScoreObject,
     translateSkipEvent: translateSkipEvent,
     translateUserJoinEvent: translateUserJoinEvent,

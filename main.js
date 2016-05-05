@@ -231,12 +231,9 @@ function _registerEventListeners(basedir, globalObject) {
     return listeners;
 }
 
-exports.BanDuration = Types.BanDuration;
-exports.BanReason = Types.BanReason;
 exports.Bot = Plug.Bot;
 exports.ChatType = Types.ChatType;
 exports.Event = Types.Event;
 exports.Log = Log;
-exports.MuteReason = Types.MuteReason;
 exports.UserRole = Types.UserRole;
 exports.start = start;

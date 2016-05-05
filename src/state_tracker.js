@@ -26,27 +26,22 @@ function init(globalObject, onComplete) {
 
     globalObject.roomState = {
         chatHistory: [],
+        mediaQueue: [],
         playHistory: [],
-        usersInRoom: [],
-        usersInWaitList: []
+        usersInRoom: []
     };
 
     bot.on(Types.Event.ADVANCE, onAdvance);
     bot.on(Types.Event.CHAT, onChat);
     bot.on(Types.Event.CHAT_DELETE, onChatDelete);
-    bot.on(Types.Event.DJ_LIST_UPDATE, onDjListUpdate);
     bot.on(Types.Event.GRAB, onGrab);
-    bot.on(Types.Event.MODERATE_REMOVE_DJ, onModerateRemoveDj);
+    bot.on(Types.Event.ROOM_PLAYLIST_QUEUE_UPDATE, onRoomPlaylistQueueUpdate);
     bot.on(Types.Event.USER_LEAVE, onUserLeave);
     bot.on(Types.Event.USER_JOIN, onUserJoin);
     bot.on(Types.Event.VOTE, onVote);
 
     globalObject.roomState.findUserInRoomById = function(userID) {
         return _findUser(globalObject.roomState.usersInRoom, userID);
-    };
-
-    globalObject.roomState.findUserInWaitListById = function(userID) {
-        return _findUser(globalObject.roomState.usersInWaitList, userID);
     };
 
     globalObject.roomState.findPlaysForContentId = function(contentID) {
@@ -74,15 +69,6 @@ function populateUsers(globalObject, callback) {
     for (var i = 0; i < users.length; i++) {
         var user = Translator.translateUserObject(users[i]);
         globalObject.roomState.usersInRoom.push(user);
-    }
-
-    // Figure out who's in the wait list. The current DJ should be included but
-    // isn't, so adjust for that too
-    globalObject.roomState.usersInWaitList.push(currentDj);
-
-    for (i = 0; i < waitList.length; i++) {
-        var translatedDj = Translator.translateUserObject(waitList[i]);
-        globalObject.roomState.usersInWaitList.push(translatedDj);
     }
 
     // Add the currently playing song to the DJ history, since we won't get
@@ -128,8 +114,6 @@ function populateUsers(globalObject, callback) {
 
 function onAdvance(event, globalObject) {
     var maxPlayHistoryLength = globalObject.config.PlugBotBase.numberOfPlayedSongsToStore;
-
-    globalObject.roomState.usersInWaitList = event.waitlistedDJs;
 
     // Add the new song to the song history
     var play = {
@@ -213,10 +197,6 @@ function onChatDelete(event, globalObject) {
     event.deletedMessages = deletedMessages;
 }
 
-function onDjListUpdate(event, globalObject) {
-    globalObject.roomState.usersInWaitList = event;
-}
-
 function onGrab(event, globalObject) {
     var currentSong = globalObject.roomState.playHistory[0];
 
@@ -225,20 +205,12 @@ function onGrab(event, globalObject) {
     }
 }
 
-function onModerateRemoveDj(event, globalObject) {
-    // Since we only get a username for this event, do a custom search
-    for (var i = 0; i < globalObject.roomState.usersInWaitList.length; i++) {
-        var user = globalObject.roomState.usersInWaitList[i];
-        if (user.username === event.username) {
-            globalObject.roomState.usersInWaitList.splice(i, 1);
-            break;
-        }
-    }
+function onRoomPlaylistQueueUpdate(event, globalObject) {
+    globalObject.roomState.waitList = event.queue;
 }
 
 function onUserLeave(event, globalObject) {
     _removeUser(globalObject.roomState.usersInRoom, event.userID);
-    _removeUser(globalObject.roomState.usersInWaitList, event.userID);
 }
 
 function onUserJoin(event, globalObject) {
