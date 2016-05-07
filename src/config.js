@@ -56,7 +56,6 @@ function _loadConfigurationFiles(basedir, config) {
         LOG.info("Found the following potential config files: {}", files);
     }
     catch (e) {
-        throw e;
         throw new Error("Unable to load configuration from the base directory '" + configDirPath + "'",  e);
     }
 
