@@ -28,7 +28,7 @@ var Event = {
     USER_UNMUTE: 'user-unmute',
     USER_UNSET_ROLE: 'user-unsetrole',
     USER_UPDATE: 'user_update', // something changes about a user (e.g. name, avatar, level, etc)
-    VOTE: 'vote' // a user woots or mehs
+    VOTE: 'room_playlist-dub' // a user woots or mehs
 };
 
 var Role = {
