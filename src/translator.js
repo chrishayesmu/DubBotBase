@@ -148,7 +148,7 @@ function translateChatType(event) {
 
 function translateGrabEvent(event) {
     return {
-        userID: event // ID of the user who grabbed the song
+        user: translateUserObject(event.user) // ID of the user who grabbed the song
     };
 }
 

@@ -22,7 +22,7 @@ var _eventTranslatorMap = {
     'chat-skip': Translator.translateSkipEvent,
     'chat-message': Translator.translateChatEvent,
     'delete-chat-message': Translator.translateChatDeleteEvent,
-    'grab': Translator.translateGrabEvent,
+    'room_playlist-queue-update-grabs': Translator.translateGrabEvent,
     'modSkip': Translator.translateModSkipEvent,
     'room_playlist-update': Translator.translateAdvanceEvent,
     'room_playlist-queue-update-dub': Translator.translateRoomPlaylistQueueUpdateEvent,
