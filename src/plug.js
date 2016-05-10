@@ -306,8 +306,6 @@ function _createEventDispatcher(internalEventName, translator, globalObject) {
 
         var internalObject = translator(event);
 
-        LOG.info("Output from translator for internalEventName {}: {}", internalEventName, internalObject);
-
         if (!internalObject) {
             return;
         }
