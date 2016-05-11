@@ -1,6 +1,10 @@
 # DubBotBase
 
-Provides a configuration-driven base for building [dubtrack.fm](https://www.dubtrack.fm) bots which run in [Node.js](https://nodejs.org/). ***This project is not yet ready for consumption!***
+Provides a configuration-driven base for building [dubtrack.fm](https://www.dubtrack.fm) bots which run in [Node.js](https://nodejs.org/).
+
+# Installation
+
+DubBotBase is available for consumption via [npm](https://www.npmjs.com/package/dubbotbase).
 
 # What's the point?
 
