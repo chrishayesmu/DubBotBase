@@ -208,9 +208,9 @@ function translateVoteEvent(event) {
 }
 
 /**
- * Translates the role integer returned by the plug.dj API into an internal model.
+ * Translates the role integer returned by the dubtrack.fm API into an internal model.
  *
- * @param {integer} roleAsInt - The plug.dj API role
+ * @param {integer} roleAsInt - The dubtrack.fm API role
  * @returns {object} A corresponding object from the UserRole enum
  */
 function translateRole(role) {

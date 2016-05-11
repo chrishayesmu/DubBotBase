@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * File exposing some utility functions for use within PlugBotBase.
+ * File exposing some utility functions for use within DubBotBase.
  */
 
 var fs = require("fs");

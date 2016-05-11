@@ -29,12 +29,12 @@ function create(basedir, defaults) {
     _loadConfigurationFiles(basedir, config);
     _validateConfig(config);
 
-    if (config.PlugBotBase.isConfigImmutable) {
+    if (config.DubBotBase.isConfigImmutable) {
         _freezeConfig(config);
         LOG.info("Configuration set up successfully. The config object is now frozen and no changes can be made to it.");
     }
     else {
-        LOG.info("Configuration set up successfully. Config has not been frozen due to override of the PlugBotBase.isConfigImmutable property.");
+        LOG.info("Configuration set up successfully. Config has not been frozen due to override of the DubBotBase.isConfigImmutable property.");
     }
 
     return config;
@@ -129,9 +129,9 @@ function _mergeConfig(base, override) {
 function _validateConfig(config) {
     for (var i = 0; i < REQUIRED_CONFIG_VARIABLES.length; i++) {
         var key = REQUIRED_CONFIG_VARIABLES[i];
-        var value = config.PlugBotBase[key];
+        var value = config.DubBotBase[key];
         if (!value || value === "UNSET") {
-            throw new Error("No value has been set in config for key: PlugBotBase." + key);
+            throw new Error("No value has been set in config for key: DubBotBase." + key);
         }
     }
 }

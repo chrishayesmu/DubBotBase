@@ -1,5 +1,5 @@
 {
-    "PlugBotBase": {
+    "DubBotBase": {
         "areCommandsCaseSensitive" : false,
         "isConfigImmutable" : true,
         "logAllEvents" : false,

@@ -1,5 +1,5 @@
 /**
- * Contains various types and enums used throughout PlugBotBase.
+ * Contains various types and enums used throughout DubBotBase.
  */
 
 var ChatType = {

@@ -1,9 +1,9 @@
 var Log = require("./log");
-var PlugBotBase = require("./plug");
+var DubBotBase = require("./dubtrack");
 var Translator = require("./translator");
 var Types = require("./types");
 
-var LOG = new Log("PlugBotBaseStateTracker");
+var LOG = new Log("DubBotBaseStateTracker");
 
 /**
  * Initializes the state tracker by doing a couple of things:
@@ -60,7 +60,7 @@ function init(globalObject, onComplete) {
 }
 
 function populateUsers(globalObject, callback) {
-    // Drill into the undocumented 'bot within a bot' which is PlugAPI for some info.
+    // Drill into the undocumented 'bot within a bot' which is DubAPI for some info.
     var currentSong = Translator.translateMediaObject(globalObject.bot.bot.getMedia());
     var currentDj = Translator.translateUserObject(globalObject.bot.bot.getDJ());
     var users = globalObject.bot.bot.getUsers();
@@ -113,7 +113,7 @@ function populateUsers(globalObject, callback) {
 // =============================
 
 function onAdvance(event, globalObject) {
-    var maxPlayHistoryLength = globalObject.config.PlugBotBase.numberOfPlayedSongsToStore;
+    var maxPlayHistoryLength = globalObject.config.DubBotBase.numberOfPlayedSongsToStore;
 
     // Add the new song to the song history
     var play = {
@@ -135,7 +135,7 @@ function onAdvance(event, globalObject) {
 }
 
 function onChat(event, globalObject) {
-    var maxChatHistoryLength = globalObject.config.PlugBotBase.numberOfChatEventsToStore;
+    var maxChatHistoryLength = globalObject.config.DubBotBase.numberOfChatEventsToStore;
 
     var chatObj = {
         chatID: event.chatID,
@@ -174,7 +174,7 @@ function onChatDelete(event, globalObject) {
     }
 
     // Chat deletion is odd: the event only mentions one ID which was deleted,
-    // but plug will actually delete that message and all subsequent messages
+    // but dubtrack will actually delete that message and all subsequent messages
     // belonging to the same user, until a message from someone else is found.
     if (deletedMessageIndex >= 0) {
         var deletedMessageUserID = globalObject.roomState.chatHistory[deletedMessageIndex].userID;
@@ -218,7 +218,7 @@ function onUserJoin(event, globalObject) {
 
     if (existingUser) {
         LOG.warn("Received a user join event for a user who was already recorded " +
-                 "as present (userID = {}, username = {}). This may indicate a bug in PlugBotBase.", event.userID, event.username);
+                 "as present (userID = {}, username = {}). This may indicate a bug in DubBotBase.", event.userID, event.username);
         return;
     }
 

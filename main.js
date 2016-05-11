@@ -5,14 +5,14 @@ var path = require("path");
 
 var Config = require("./src/config");
 var Log = require("./src/log");
-var Plug = require("./src/plug");
+var Dubtrack = require("./src/dubtrack");
 var StateTracker = require("./src/state_tracker");
 var Types = require("./src/types");
 var Utils = require("./src/utils");
 
 var Event = Types.Event;
 
-var LOG = new Log("PlugBotBaseMain");
+var LOG = new Log("DubBotBaseMain");
 
 /**
  * Starts up the bot, registering all commands and event listeners.
@@ -29,7 +29,7 @@ function start(basedir, connectionCompleteCallback) {
 
     var loginCompleteCallback = function(bot) {
         globalObject.bot = bot;
-        bot.connect(config.PlugBotBase.roomName);
+        bot.connect(config.DubBotBase.roomName);
 
         LOG.info("Connect request sent. Waiting 5 seconds for the connection to be established.");
         var innerConnectionCompleteCallback = function() {
@@ -50,9 +50,9 @@ function start(basedir, connectionCompleteCallback) {
         setTimeout(innerConnectionCompleteCallback, 5000);
     };
 
-    new Plug.Bot({
-        username: config.PlugBotBase.botEmail,
-        password: config.PlugBotBase.botPassword
+    new Dubtrack.Bot({
+        username: config.DubBotBase.botEmail,
+        password: config.DubBotBase.botPassword
     }, globalObject, loginCompleteCallback);
 
     return globalObject;
@@ -74,7 +74,7 @@ function _createCommandHandler(commands) {
 
         var commandName = chatEvent.command;
 
-        if (!globalObject.config.PlugBotBase.areCommandsCaseSensitive) {
+        if (!globalObject.config.DubBotBase.areCommandsCaseSensitive) {
             commandName = commandName.toLowerCase();
         }
 
@@ -102,7 +102,7 @@ function _createCommandHandler(commands) {
  * directory as commands with the bot.
  *
  * @param {string} basedir - The base directory which holds the commands directory
- * @param {object} bot - An instance of PlugBotBase.Bot
+ * @param {object} bot - An instance of DubBotBase.Bot
  */
 function _registerCommands(basedir, globalObject) {
     var commandsDir = path.resolve(basedir, "commands");
@@ -148,7 +148,7 @@ function _registerCommands(basedir, globalObject) {
  * directory as event listeners with the bot.
  *
  * @param {string} basedir - The base directory which holds the event_listeners directory
- * @param {object} bot - An instance of PlugBotBase.Bot
+ * @param {object} bot - An instance of DubBotBase.Bot
  */
 function _registerEventListeners(basedir, globalObject) {
     var bot = globalObject.bot;
@@ -231,7 +231,7 @@ function _registerEventListeners(basedir, globalObject) {
     return listeners;
 }
 
-exports.Bot = Plug.Bot;
+exports.Bot = Dubtrack.Bot;
 exports.ChatType = Types.ChatType;
 exports.Event = Types.Event;
 exports.Log = Log;

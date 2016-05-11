@@ -4,19 +4,19 @@
  * Provides the basic functionality of the bot: event subscription,
  * model translation, and taking actions such as sending chat or moderating.
  *
- * The main goal of this class is to provide insulation between the plug.dj
- * API implementation and clients, since historically, plug.dj implementations
+ * The main goal of this class is to provide insulation between the dubtrack.fm
+ * API implementation and clients, since historically, dubtrack.fm implementations
  * have changed rather frequently. In the event of a breaking change, hopefully only
  * this class will need to be updated.
  */
 
 var Log = require("./log");
-var PlugAPI = require("dubapi");
+var DubAPI = require("dubapi");
 var Translator = require("./translator");
 var Types = require("./types");
 var Utils = require("./utils");
 
-var LOG = new Log("PlugBotBase-Bot");
+var LOG = new Log("DubBotBase-Bot");
 
 var _eventTranslatorMap = {
     'chat-skip': Translator.translateSkipEvent,
@@ -36,13 +36,13 @@ var _eventTranslatorMap = {
 };
 
 /**
- * Creates a new instance of the bot which will automatically connect to plug.dj
+ * Creates a new instance of the bot which will automatically connect to dubtrack.fm
  * and set up some event handling.
  */
 function Bot(credentials, globalObject, initializationCompleteCallback) {
     LOG.info("Attempting to log in with email {}", credentials.username);
 
-    new PlugAPI(credentials, (function(err, _bot) {
+    new DubAPI(credentials, (function(err, _bot) {
         if (err) {
             throw new Error("Error occurred when logging in: " + err);
         }
@@ -51,14 +51,14 @@ function Bot(credentials, globalObject, initializationCompleteCallback) {
 
         LOG.info("Logged in successfully");
 
-        // Set up custom event handling to insulate us from changes in the plug API
+        // Set up custom event handling to insulate us from changes in the dubtrack API
         this.eventHandlers = {};
         for (var eventKey in Types.Event) {
             var eventName = Types.Event[eventKey];
             this.eventHandlers[eventName] = [];
         }
 
-        if (globalObject.config.PlugBotBase.logAllEvents) {
+        if (globalObject.config.DubBotBase.logAllEvents) {
             LOG.info("Logging of all events is enabled. Setting up logging event handlers.");
             for (var eventKey in Types.Event) {
                 var eventName = Types.Event[eventKey];
@@ -85,7 +85,7 @@ function Bot(credentials, globalObject, initializationCompleteCallback) {
 }
 
 /**
- * Attempts to connect the logged-in bot to a specific plug.dj room.
+ * Attempts to connect the logged-in bot to a specific dubtrack.fm room.
  *
  * @param {string} roomName - The name of the room to connect to
  */
@@ -291,7 +291,7 @@ Bot.prototype.on = function(eventName, callback, /* optional */ context) {
  * Creates a function which dispatches the given event to its listeners.
  *
  * @param {string} internalEventName - The event name from the Event enum
- * @param {function} translator - A function which translates from the PlugAPI event to an internal model
+ * @param {function} translator - A function which translates from the DubAPI event to an internal model
  * @param {object} globalObject - The object representing global application state
  * @returns {function} An event dispatcher function appropriate to the event
  */
