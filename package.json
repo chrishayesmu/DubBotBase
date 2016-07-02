@@ -3,7 +3,7 @@
   "description": "",
   "version": "0.4.0",
   "bugs": "https://github.com/chrishayesmu/DubBotBase/issues",
-  "license": "AML",
+  "license": "MIT",
   "author": "Chris Hayes",
   "main": "main.js",
   "repository": {
@@ -11,6 +11,6 @@
     "url": "http://github.com/chrishayesmu/DubBotBase"
   },
   "dependencies": {
-    "dubapi": "1.6.0"
+    "dubapi": "1.6.2"
   }
 }
