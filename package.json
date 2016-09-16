@@ -11,6 +11,6 @@
     "url": "http://github.com/chrishayesmu/DubBotBase"
   },
   "dependencies": {
-    "dubapi": "1.6.2"
+    "dubapi": "1.6.3"
   }
 }
