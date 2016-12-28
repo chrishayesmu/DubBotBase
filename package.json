@@ -1,7 +1,7 @@
 {
   "name": "dubbotbase",
   "description": "",
-  "version": "0.4.2",
+  "version": "0.4.4",
   "bugs": "https://github.com/chrishayesmu/DubBotBase/issues",
   "license": "MIT",
   "author": "Chris Hayes",
@@ -11,6 +11,6 @@
     "url": "http://github.com/chrishayesmu/DubBotBase"
   },
   "dependencies": {
-    "dubapi": "1.6.3"
+    "dubapi": "1.6.5"
   }
 }
