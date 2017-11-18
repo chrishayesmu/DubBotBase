@@ -51,6 +51,17 @@ function Bot(credentials, globalObject, initializationCompleteCallback) {
 
         LOG.info("Logged in successfully");
 
+        // Set up an error handler so errors don't cause the bot to crash
+        this.bot.on('error', function(err) {
+            LOG.error("Unhandled error occurred; swallowing it so bot keeps running. Error: {}", err);
+        });
+
+        // Reconnect the bot automatically if it disconnects
+        this.bot.on('disconnected', (function(roomName) {
+            LOG.warn("Disconnected from room {}. Reconnecting..", roomName);
+            this.connect(roomName);
+        }).bind(this));
+
         // Set up custom event handling to insulate us from changes in the dubtrack API
         this.eventHandlers = {};
         for (var eventKey in Types.Event) {
